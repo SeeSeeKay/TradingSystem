@@ -23,6 +23,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -37,6 +38,7 @@ public class TradeServiceImpl implements TradeServiceInterface {
     // Add additional beans here if needed for your implementation
 
     @Override
+    @Transactional
     public TradeResponse executeTrade(TradeRequest tradeRequest) {
         // TODO: Implement the core trading engine
         // What should happen when a user executes a trade?
@@ -72,6 +74,7 @@ public class TradeServiceImpl implements TradeServiceInterface {
                         BigDecimal quoteBalance = quoteSymbol.getBalance().subtract(totalValue);
                         walletMapper.updateBalance(userId, quoteSymbol.getSymbol(), quoteBalance);
                         walletMapper.updateBalance(userId, baseSymbol.getSymbol(), baseBalance);
+                        tradeMapper.insertTrade(trade);
                     }
                 }
                 else{
@@ -94,13 +97,13 @@ public class TradeServiceImpl implements TradeServiceInterface {
                         BigDecimal quoteBalance = quoteSymbol.getBalance().add(totalValue);
                         walletMapper.updateBalance(userId, quoteSymbol.getSymbol(), quoteBalance);
                         walletMapper.updateBalance(userId, baseSymbol.getSymbol(), baseBalance);
+                        tradeMapper.insertTrade(trade);  
                     }
                 }
             } catch(Exception ex){
                 log.error("Wallet update failed for userId={} pair={}: {}",userId, tradeRequest.getPairName(), ex.getMessage(), ex);
                 throw new RuntimeException("Trade failed due to a system error. Please try again.", ex);
             }
-            tradeMapper.insertTrade(trade);
 
             return TradeResponse.builder()
                     .tradeId(trade.getId())
