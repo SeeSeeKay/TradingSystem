@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -23,8 +25,19 @@ public class WalletServiceImpl implements WalletServiceInterface {
                 .toList();
     }
 
+    public Map<Long, WalletBalanceResponse> getUserWalletBalancesMap(Long userId) {
+        List<UserWalletDto> wallets = userWalletMapper.findByUserId(userId);
+        
+        return wallets.stream()
+            .collect(Collectors.toMap(
+                    UserWalletDto::getSymbolId,
+                    this::mapToResponse
+            ));
+    }
+
     private WalletBalanceResponse mapToResponse(UserWalletDto wallet) {
         WalletBalanceResponse response = new WalletBalanceResponse();
+        response.setSymbolId(wallet.getSymbolId());
         response.setSymbol(wallet.getSymbol());
         response.setName(wallet.getName());
         response.setBalance(wallet.getBalance());

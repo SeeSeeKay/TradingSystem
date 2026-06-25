@@ -14,6 +14,11 @@ public interface CryptoPairMapper {
             """)
     Long findIdByPairName(String pairName);
 
+        @Select("""
+            SELECT active FROM crypto_pairs WHERE pair_name = #{pairName}
+            """)
+    Boolean findActiveByPairName(String pairName);
+
     @Select("""
             SELECT * FROM crypto_pairs WHERE pair_name = #{pairName}
             """)

@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 
 @Data
 public class WalletBalanceResponse {
+    private Long symbolId;
     private String symbol;
     private String name;
     private BigDecimal balance;
