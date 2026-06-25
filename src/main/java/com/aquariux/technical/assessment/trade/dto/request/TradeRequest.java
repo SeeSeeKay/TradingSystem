@@ -13,8 +13,8 @@ public class TradeRequest {
     @NotNull(message = "tradeType is required")
     private TradeType tradeType;
 
-    @NotNull(message = "symbol is required")
-    private String symbol;
+    @NotNull(message = "pair name is required")
+    private String pairName;
 
     @NotNull(message = "amount is required")
     @Positive(message = "amount must be greater than 0")

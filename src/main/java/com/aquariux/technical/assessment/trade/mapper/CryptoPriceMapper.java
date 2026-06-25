@@ -4,6 +4,7 @@ import com.aquariux.technical.assessment.trade.entity.CryptoPrice;
 import org.apache.ibatis.annotations.*;
 
 import java.util.List;
+import java.math.BigDecimal;
 
 @Mapper
 public interface CryptoPriceMapper {
@@ -23,4 +24,16 @@ public interface CryptoPriceMapper {
             ORDER BY cp.crypto_pair_id
             """)
     List<CryptoPrice> findLatestPrices();
+
+// user can sell at this price
+        @Select("""
+                SELECT bid_price FROM crypto_prices WHERE crypto_pair_id = #{id}
+                """)
+    BigDecimal findBidPriceByCryptoPairId(Long id);
+
+// user can buy at this price
+        @Select("""
+                        SELECT ask_price FROM crypto_prices WHERE crypto_pair_id = #{id}
+                        """)
+    BigDecimal findAskPriceByCryptoPairId(Long id);
 }
