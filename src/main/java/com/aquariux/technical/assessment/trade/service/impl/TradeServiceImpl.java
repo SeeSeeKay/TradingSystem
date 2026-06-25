@@ -22,8 +22,9 @@ import java.util.List;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 
-
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class TradeServiceImpl implements TradeServiceInterface {
@@ -53,7 +54,18 @@ public class TradeServiceImpl implements TradeServiceInterface {
                 WalletBalanceResponse quoteSymbol = walletResMap.get(cryptoPair.getQuoteSymbolId()); // Currency
                 if(tradeRequest.getTradeType() == TradeType.BUY){
                     if(quoteSymbol.getBalance().compareTo(totalValue) < 0){
-                        // TODO: return not enough quote balance message;
+                        return TradeResponse.builder()
+                                .pairName(tradeRequest.getPairName())
+                                .tradeType(tradeRequest.getTradeType().toString())
+                                .quantity(tradeRequest.getAmount())
+                                .executionPrice(price)
+                                .totalAmount(totalValue)
+                                .status("FAILED")
+                                .message(String.format(
+                                    "Insufficient %s balance. Required: %.8f, Available: %.8f",
+                                    quoteSymbol.getName(), totalValue, quoteSymbol.getBalance()))
+                                .tradeTime(LocalDateTime.now())
+                                .build();
                     }
                     else{
                         BigDecimal baseBalance = baseSymbol.getBalance().add(tradeRequest.getAmount());
@@ -64,7 +76,18 @@ public class TradeServiceImpl implements TradeServiceInterface {
                 }
                 else{
                     if(baseSymbol.getBalance().compareTo(tradeRequest.getAmount()) < 0){
-                        // TODO: return not enough base balance message
+                        return TradeResponse.builder()
+                                .pairName(tradeRequest.getPairName())
+                                .tradeType(tradeRequest.getTradeType().toString())
+                                .quantity(tradeRequest.getAmount())
+                                .executionPrice(price)
+                                .totalAmount(totalValue)
+                                .status("FAILED")
+                                .message(String.format(
+                                    "Insufficient %s balance. Required: %.8f, Available: %.8f",
+                                    baseSymbol.getName(), tradeRequest.getAmount(), baseSymbol.getBalance()))
+                                .tradeTime(LocalDateTime.now())
+                                .build();
                     }
                     else{
                         BigDecimal baseBalance = baseSymbol.getBalance().subtract(tradeRequest.getAmount());
@@ -74,14 +97,31 @@ public class TradeServiceImpl implements TradeServiceInterface {
                     }
                 }
             } catch(Exception ex){
-
+                log.error("Wallet update failed for userId={} pair={}: {}",userId, tradeRequest.getPairName(), ex.getMessage(), ex);
+                throw new RuntimeException("Trade failed due to a system error. Please try again.", ex);
             }
+            tradeMapper.insertTrade(trade);
+
+            return TradeResponse.builder()
+                    .tradeId(trade.getId())
+                    .pairName(tradeRequest.getPairName())
+                    .tradeType(tradeRequest.getTradeType().toString())
+                    .quantity(tradeRequest.getAmount())
+                    .executionPrice(price)
+                    .totalAmount(totalValue)
+                    .status("COMPLETED")
+                    .message("Trade executed successfully")
+                    .tradeTime(trade.getTradeTime())
+                    .build();
         }
         else{
-            // TODO: return current pair is not active message
+            return TradeResponse.builder()
+                .pairName(tradeRequest.getPairName())
+                .tradeType(tradeRequest.getTradeType().toString())
+                .status("FAILED")
+                .message("Trading pair '" + tradeRequest.getPairName() + "' is not active")
+                .build();
         }
-
-        throw new UnsupportedOperationException("Trade execution logic to be implemented");
     }
 
     private Trade createTrade(TradeRequest tradeRequest, Long cryptoPairId, BigDecimal price){

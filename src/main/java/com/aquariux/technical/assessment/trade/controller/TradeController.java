@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 
 @RestController
 @RequestMapping("/api/trades")
@@ -25,8 +26,11 @@ public class TradeController {
     @PostMapping(value = "/execute", produces = "application/json")
     @Operation(summary = "Execute trade", description = "Execute a buy or sell trade for cryptocurrency pairs")
     public ResponseEntity<TradeResponse> executeTrade(@RequestBody @Valid TradeRequest tradeRequest) {
-        TradeResponse response = tradeService.executeTrade(tradeRequest);
         // TODO: How should a trading API endpoint behave?
-        return ResponseEntity.ok(tradeService.executeTrade(tradeRequest));
+        TradeResponse response = tradeService.executeTrade(tradeRequest);
+        if("FAILED".equals(response.getStatus())){
+            return ResponseEntity.unprocessableEntity().body(response); 
+        }
+        return ResponseEntity.status(HttpStatus.CREATED).body(response); 
     }
 }
